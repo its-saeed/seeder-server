@@ -6,6 +6,11 @@
 class Client
 {
 public:
+	Client(std::string&& address)
+	: address(std::move(address))
+	{
+	}
+
 	const std::string& get_address() const noexcept
 	{
 		return address;
