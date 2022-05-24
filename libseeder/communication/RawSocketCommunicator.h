@@ -1,15 +1,12 @@
 #ifndef RawSocketCommunicator_h__
 #define RawSocketCommunicator_h__
 
-#include "Communicator.h"
+#include "../utils/Thread.h"
 
-class RawSockerCommunicator : public Communicator
+class RawSocketCommunicator : public Thread
 {
 public:
-	void start() override
-	{
-		throw std::logic_error("The method or operation is not implemented.");
-	}
+	void run() override;
 };
 
 #endif // RawSocketCommunicator_h__
