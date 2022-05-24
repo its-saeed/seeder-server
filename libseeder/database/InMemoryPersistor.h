@@ -9,20 +9,9 @@
 class InMemoryPersistor : public Persistor
 {
 public:
-	void add_client(Client&& client) override
-	{
-		throw std::logic_error("The method or operation is not implemented.");
-	}
-
-	void remove_client(const Client& client) override
-	{
-		throw std::logic_error("The method or operation is not implemented.");
-	}
-
-	void touch_client(const Client& client) override
-	{
-		throw std::logic_error("The method or operation is not implemented.");
-	}
+	void add_client(Client&& client) override;
+	void remove_client(const std::string& address) override;
+	void touch_client(const std::string& client) override;
 
 private:
 	std::unordered_map<std::string, Client> active_clients;
