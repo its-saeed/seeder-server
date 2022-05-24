@@ -11,7 +11,7 @@ namespace logging
 
 static constexpr const char* LOGGER_NAME = "seeder";
 
-void init(bool syslog = false);
+void init();
 void drop();
 
 std::shared_ptr<spdlog::logger> log();
