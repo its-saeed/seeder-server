@@ -4,7 +4,7 @@
 class Communicator
 {
 public:
-
+	virtual void start() = 0;
 };
 
 #endif // Communicator_h__
