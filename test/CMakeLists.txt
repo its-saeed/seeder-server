@@ -28,7 +28,7 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
                  EXCLUDE_FROM_ALL)
 
 # Now simply link against gtest or gtest_main as needed. Eg
-add_executable(seeder-test example.cpp "ClientManagerFunctionality.cpp")
+add_executable(seeder-test  "ClientManagerFunctionality.cpp")
 target_link_libraries(seeder-test libseeder gmock_main)
 
 gtest_discover_tests(seeder-test)

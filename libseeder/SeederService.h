@@ -3,6 +3,7 @@
 
 #include "argument-parser/ArgumentParser.h"
 #include "client-manager/ClientManager.h"
+#include "database/InMemoryPersistor.h"
 
 class SeederService
 {
@@ -11,7 +12,7 @@ public:
 	void start();
 
 private:
-	ClientManager client_manager;
+	ClientManager<InMemoryPersistor> client_manager;
 };
 
 #endif // SeederService_h__
