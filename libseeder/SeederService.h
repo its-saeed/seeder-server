@@ -1,8 +1,8 @@
 #ifndef SeederService_h__
 #define SeederService_h__
 
-#include "argument-parser/ArgumentParser.h"
-#include "client-manager/ClientManager.h"
+#include "ArgumentParser.h"
+#include "ClientManager.h"
 
 template<typename CommunicationChannel>
 class SeederService

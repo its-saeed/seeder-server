@@ -1,5 +1,5 @@
 #include "InMemoryCollection.h"
-#include "logger/SpdLogger.h"
+#include "SpdLogger.h"
 
 void InMemoryCollection::add_client(Client&& client)
 {

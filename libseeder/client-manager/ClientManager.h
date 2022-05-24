@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "Client.h"
-#include "../database/InMemoryCollection.h"
-#include "../logger/SpdLogger.h"
+#include "InMemoryCollection.h"
+#include "SpdLogger.h"
 
 template <typename Persistor>
 class ClientManager

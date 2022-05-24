@@ -5,7 +5,7 @@
 #include <evpp/tcp_conn.h>
 #include <evpp/timestamp.h>
 
-#include "logger/SpdLogger.h"
+#include "SpdLogger.h"
 
 RawSocketCommunicator::RawSocketCommunicator(InMemoryClientManager* client_manager)
 : client_manager(client_manager)

@@ -2,7 +2,8 @@
 #define InMemoryPersistor_h__
 
 #include <unordered_map>
-#include "../client-manager/Client.h"
+
+#include "Client.h"
 
 class InMemoryCollection 
 {
