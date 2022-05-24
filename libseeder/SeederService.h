@@ -3,16 +3,23 @@
 
 #include "argument-parser/ArgumentParser.h"
 #include "client-manager/ClientManager.h"
-#include "database/InMemoryCollection.h"
 
+template<typename ClientCollection, typename CommunicationChannel>
 class SeederService
 {
 public:
-	SeederService(Argument arguments);
-	void start();
+	SeederService(Argument arguments)
+	{
+	}
+
+	void start()
+	{
+    	communication_channel.start();
+	}
 
 private:
-	ClientManager<InMemoryCollection> client_manager;
+	ClientManager<ClientCollection> client_manager;
+	CommunicationChannel communication_channel;
 };
 
 #endif // SeederService_h__
