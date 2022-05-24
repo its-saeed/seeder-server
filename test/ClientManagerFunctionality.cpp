@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 #include "client-manager/ClientManager.h"
-#include "database/InMemoryPersistor.h"
+#include "database/InMemoryCollection.h"
 
 class ClientManagerFunctionality : public ::testing::Test
 {
 protected:
-	ClientManager<InMemoryPersistor> client_manager;
+	ClientManager<InMemoryCollection> client_manager;
 };
 
 TEST_F(ClientManagerFunctionality, adding_a_new_client_should_increment_clients_count)

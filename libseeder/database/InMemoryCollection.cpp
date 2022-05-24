@@ -1,7 +1,7 @@
-#include "InMemoryPersistor.h"
+#include "InMemoryCollection.h"
 #include "logger/SpdLogger.h"
 
-void InMemoryPersistor::add_client(Client&& client)
+void InMemoryCollection::add_client(Client&& client)
 {
 	if (active_clients.find(client.get_address()) != active_clients.end())
 	{
@@ -12,7 +12,7 @@ void InMemoryPersistor::add_client(Client&& client)
 	active_clients.insert(std::make_pair(client.get_address(), std::move(client)));
 }
 
-void InMemoryPersistor::remove_client(const std::string& address)
+void InMemoryCollection::remove_client(const std::string& address)
 {
 	if (active_clients.find(address) == active_clients.end())
 	{
@@ -23,12 +23,12 @@ void InMemoryPersistor::remove_client(const std::string& address)
 	active_clients.erase(address);
 }
 
-void InMemoryPersistor::touch_client(const std::string& address)
+void InMemoryCollection::touch_client(const std::string& address)
 {
 	throw std::logic_error("The method or operation is not implemented.");
 }
 
-size_t InMemoryPersistor::get_clients_count() const noexcept
+size_t InMemoryCollection::get_clients_count() const noexcept
 {
 	return active_clients.size();
 }
