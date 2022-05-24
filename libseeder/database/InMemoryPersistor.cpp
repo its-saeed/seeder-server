@@ -27,3 +27,8 @@ void InMemoryPersistor::touch_client(const std::string& address)
 {
 	throw std::logic_error("The method or operation is not implemented.");
 }
+
+size_t InMemoryPersistor::get_clients_count() const noexcept
+{
+	return active_clients.size();
+}

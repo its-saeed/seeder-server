@@ -10,7 +10,8 @@ class ClientManager
 {
 public:
 	void add(Client&& client);
-	void remove(const Client& client);
+	void remove(const std::string& address);
+	size_t count() const noexcept;
 	std::vector<Client> get_active_nodes(int count);
 
 private:

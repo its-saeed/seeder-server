@@ -17,6 +17,8 @@ public:
 	/// Touch a Client. It means the client is alive and active in the network.
 	/// </summary>
 	virtual void touch_client(const std::string& address) = 0;
+
+	virtual size_t get_clients_count() const noexcept = 0;
 };
 
 #endif // Persistor_h__
