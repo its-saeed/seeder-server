@@ -1,0 +1,27 @@
+namespace Seeder;
+
+enum HelloRequestResult: byte {
+    REGISTERED_SUCCESSFULLY,
+    ALREADY_REGISTERED
+}
+
+table HelloResponse {
+    result: HelloRequestResult;
+}
+
+table PingResponse {
+    peer_current_connections: [string];
+}
+
+table GetPeersResponse {
+    active_peers: [string];
+}
+
+union ResponseType { HelloResponse, PingResponse, GetPeersResponse}
+
+table Response {
+    id: ushort;
+    response: ResponseType;
+}
+
+root_type Response;

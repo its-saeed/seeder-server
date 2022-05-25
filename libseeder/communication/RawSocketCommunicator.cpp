@@ -4,6 +4,7 @@
 #include <evpp/timestamp.h>
 
 #include "SpdLogger.h"
+#include "Response_generated.h"
 
 RawSocketCommunicator::RawSocketCommunicator(InMemoryClientManager* client_manager)
 : client_manager(client_manager)
@@ -24,21 +25,17 @@ void RawSocketCommunicator::run()
         logging::log()->info("New request of type {} with ID {}",
             request_type_to_string(request->request_type()), request->id());
 
-        evpp::Buffer* response;
         switch (request->request_type())
         {
         case Seeder::RequestType_HelloRequest:
-            response = handle_hello_request(conn, request->request_as_HelloRequest());
+            handle_hello_request(conn, request);
             break;
         case Seeder::RequestType_GetPeersRequest:
-            response = handle_get_peers_request(conn, request->request_as_GetPeersRequest());
+            handle_get_peers_request(conn, request);
             break;
         default:
             break;
         }
-
-        conn->Send(response);
-        delete response;
     });
     server.SetConnectionCallback([](const evpp::TCPConnPtr& conn) {
         if (conn->IsConnected()) {
@@ -65,25 +62,54 @@ const Seeder::Request* RawSocketCommunicator::parse_buffer(evpp::Buffer* buffer)
     return Seeder::GetRequest(data);
 }
 
-evpp::Buffer* RawSocketCommunicator::handle_hello_request(const evpp::TCPConnPtr& conn,
-    const Seeder::HelloRequest* request)
+void RawSocketCommunicator::handle_hello_request(const evpp::TCPConnPtr& conn,
+    const Seeder::Request* request)
 {
-    evpp::Buffer* response = new evpp::Buffer();
-    if (client_manager->add({ "1.2.2.3" }))       // Added successfully
-    {
-        response->AppendInt8(1);
-    }
-    else {
-        response->AppendInt8(0);
-    }
+    flatbuffers::FlatBufferBuilder builder(100);
+    flatbuffers::Offset<Seeder::HelloResponse> response;
+    if (client_manager->add({ request->request_as_HelloRequest()->address()->str() }))       // Added successfully
+        response = Seeder::CreateHelloResponse(builder, Seeder::HelloRequestResult::HelloRequestResult_REGISTERED_SUCCESSFULLY);
+    else
+        response = Seeder::CreateHelloResponse(builder, Seeder::HelloRequestResult::HelloRequestResult_ALREADY_REGISTERED);
 
-    return response;
+    auto response_builder = Seeder::ResponseBuilder(builder);
+    response_builder.add_id(request->id());
+
+    response_builder.add_response(response.Union());
+    response_builder.add_response_type(Seeder::ResponseType_HelloResponse);
+
+	auto orc = response_builder.Finish();
+	builder.Finish(orc);
+	const uint8_t* buffer = builder.GetBufferPointer();
+	const size_t size = builder.GetSize();
+
+    conn->Send(buffer, size);
 }
 
-evpp::Buffer* RawSocketCommunicator::handle_get_peers_request(const evpp::TCPConnPtr& conn,
-    const Seeder::GetPeersRequest* request)
+void RawSocketCommunicator::handle_get_peers_request(const evpp::TCPConnPtr& conn,
+    const Seeder::Request* request)
 {
-	throw std::logic_error("The method or operation is not implemented.");
+    flatbuffers::FlatBufferBuilder builder(1000);
+
+    const auto peers = client_manager->get_active_nodes(request->request_as_GetPeersRequest()->number_of_peers());
+
+    std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
+    for (const auto& peer : peers) {
+        active_peers.push_back(builder.CreateString(peer));
+    }
+    auto response = Seeder::CreateGetPeersResponse(builder, builder.CreateVector(active_peers));
+
+    auto response_builder = Seeder::ResponseBuilder(builder);
+    response_builder.add_id(request->id());
+    response_builder.add_response(response.Union());
+    response_builder.add_response_type(Seeder::ResponseType_GetPeersResponse);
+
+	auto orc = response_builder.Finish();
+	builder.Finish(orc);
+	const uint8_t* buffer = builder.GetBufferPointer();
+	const size_t size = builder.GetSize();
+
+    conn->Send(buffer, size);
 }
 
 std::string RawSocketCommunicator::request_type_to_string(Seeder::RequestType request_type)

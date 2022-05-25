@@ -28,7 +28,10 @@ public:
 		return persistor.get_clients_count();
 	}
 
-	std::vector<Client> get_active_nodes(int count);
+	std::vector<std::string> get_active_nodes(int count)
+	{
+		return { "1", "2", "3" };
+	}
 
 private:
 	Persistor persistor;

@@ -17,8 +17,8 @@ public:
 private:
 	static std::string request_type_to_string(Seeder::RequestType request_type);
 	const Seeder::Request* parse_buffer(evpp::Buffer* buffer);
-	evpp::Buffer* handle_hello_request(const evpp::TCPConnPtr& conn, const Seeder::HelloRequest* request);
-	evpp::Buffer* handle_get_peers_request(const evpp::TCPConnPtr& conn, const Seeder::GetPeersRequest* request);
+	void handle_hello_request(const evpp::TCPConnPtr& conn, const Seeder::Request* request);
+	void handle_get_peers_request(const evpp::TCPConnPtr& conn, const Seeder::Request* request);
 
 	InMemoryClientManager* client_manager;
 };
