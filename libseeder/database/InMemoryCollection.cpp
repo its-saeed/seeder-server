@@ -1,15 +1,16 @@
 #include "InMemoryCollection.h"
 #include "SpdLogger.h"
 
-void InMemoryCollection::add_client(Client&& client)
+bool InMemoryCollection::add_client(Client&& client)
 {
 	if (active_clients.find(client.get_address()) != active_clients.end())
 	{
 		logging::log()->warn("Trying to add an existing client with address {}", client.get_address());
-		return;
+		return false;
 	}
 
 	active_clients.insert(std::make_pair(client.get_address(), std::move(client)));
+	return true;
 }
 
 void InMemoryCollection::remove_client(const std::string& address)

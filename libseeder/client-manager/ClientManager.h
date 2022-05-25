@@ -11,10 +11,10 @@ template <typename Persistor>
 class ClientManager
 {
 public:
-	void add(Client&& client)
+	bool add(Client&& client)
 	{
 		logging::log()->info("Client {} added to Client manager.", client.get_address());
-		persistor.add_client(std::move(client));
+		return persistor.add_client(std::move(client));
 	}
 
 	void remove(const std::string& address)

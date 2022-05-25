@@ -8,7 +8,7 @@
 class InMemoryCollection 
 {
 public:
-	void add_client(Client&& client);
+	bool add_client(Client&& client);
 	void remove_client(const std::string& address);
 	void touch_client(const std::string& client);
 	size_t get_clients_count() const noexcept;
