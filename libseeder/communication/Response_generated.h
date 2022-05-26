@@ -11,9 +11,6 @@ namespace Seeder {
 struct HelloResponse;
 struct HelloResponseBuilder;
 
-struct PingResponse;
-struct PingResponseBuilder;
-
 struct GetPeersResponse;
 struct GetPeersResponseBuilder;
 
@@ -53,27 +50,24 @@ inline const char *EnumNameHelloRequestResult(HelloRequestResult e) {
 enum ResponseType : uint8_t {
   ResponseType_NONE = 0,
   ResponseType_HelloResponse = 1,
-  ResponseType_PingResponse = 2,
-  ResponseType_GetPeersResponse = 3,
+  ResponseType_GetPeersResponse = 2,
   ResponseType_MIN = ResponseType_NONE,
   ResponseType_MAX = ResponseType_GetPeersResponse
 };
 
-inline const ResponseType (&EnumValuesResponseType())[4] {
+inline const ResponseType (&EnumValuesResponseType())[3] {
   static const ResponseType values[] = {
     ResponseType_NONE,
     ResponseType_HelloResponse,
-    ResponseType_PingResponse,
     ResponseType_GetPeersResponse
   };
   return values;
 }
 
 inline const char * const *EnumNamesResponseType() {
-  static const char * const names[5] = {
+  static const char * const names[4] = {
     "NONE",
     "HelloResponse",
-    "PingResponse",
     "GetPeersResponse",
     nullptr
   };
@@ -94,10 +88,6 @@ template<> struct ResponseTypeTraits<Seeder::HelloResponse> {
   static const ResponseType enum_value = ResponseType_HelloResponse;
 };
 
-template<> struct ResponseTypeTraits<Seeder::PingResponse> {
-  static const ResponseType enum_value = ResponseType_PingResponse;
-};
-
 template<> struct ResponseTypeTraits<Seeder::GetPeersResponse> {
   static const ResponseType enum_value = ResponseType_GetPeersResponse;
 };
@@ -108,14 +98,19 @@ bool VerifyResponseTypeVector(flatbuffers::Verifier &verifier, const flatbuffers
 struct HelloResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef HelloResponseBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_RESULT = 4
+    VT_RESULT = 4,
+    VT_AVAILABILITY_INTERVAL = 6
   };
   Seeder::HelloRequestResult result() const {
     return static_cast<Seeder::HelloRequestResult>(GetField<int8_t>(VT_RESULT, 0));
   }
+  int8_t availability_interval() const {
+    return GetField<int8_t>(VT_AVAILABILITY_INTERVAL, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int8_t>(verifier, VT_RESULT) &&
+           VerifyField<int8_t>(verifier, VT_AVAILABILITY_INTERVAL) &&
            verifier.EndTable();
   }
 };
@@ -126,6 +121,9 @@ struct HelloResponseBuilder {
   flatbuffers::uoffset_t start_;
   void add_result(Seeder::HelloRequestResult result) {
     fbb_.AddElement<int8_t>(HelloResponse::VT_RESULT, static_cast<int8_t>(result), 0);
+  }
+  void add_availability_interval(int8_t availability_interval) {
+    fbb_.AddElement<int8_t>(HelloResponse::VT_AVAILABILITY_INTERVAL, availability_interval, 0);
   }
   explicit HelloResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -140,62 +138,12 @@ struct HelloResponseBuilder {
 
 inline flatbuffers::Offset<HelloResponse> CreateHelloResponse(
     flatbuffers::FlatBufferBuilder &_fbb,
-    Seeder::HelloRequestResult result = Seeder::HelloRequestResult_REGISTERED_SUCCESSFULLY) {
+    Seeder::HelloRequestResult result = Seeder::HelloRequestResult_REGISTERED_SUCCESSFULLY,
+    int8_t availability_interval = 0) {
   HelloResponseBuilder builder_(_fbb);
+  builder_.add_availability_interval(availability_interval);
   builder_.add_result(result);
   return builder_.Finish();
-}
-
-struct PingResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef PingResponseBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PEER_CURRENT_CONNECTIONS = 4
-  };
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *peer_current_connections() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_PEER_CURRENT_CONNECTIONS);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_PEER_CURRENT_CONNECTIONS) &&
-           verifier.VerifyVector(peer_current_connections()) &&
-           verifier.VerifyVectorOfStrings(peer_current_connections()) &&
-           verifier.EndTable();
-  }
-};
-
-struct PingResponseBuilder {
-  typedef PingResponse Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_peer_current_connections(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> peer_current_connections) {
-    fbb_.AddOffset(PingResponse::VT_PEER_CURRENT_CONNECTIONS, peer_current_connections);
-  }
-  explicit PingResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  flatbuffers::Offset<PingResponse> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<PingResponse>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<PingResponse> CreatePingResponse(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> peer_current_connections = 0) {
-  PingResponseBuilder builder_(_fbb);
-  builder_.add_peer_current_connections(peer_current_connections);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<PingResponse> CreatePingResponseDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *peer_current_connections = nullptr) {
-  auto peer_current_connections__ = peer_current_connections ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*peer_current_connections) : 0;
-  return Seeder::CreatePingResponse(
-      _fbb,
-      peer_current_connections__);
 }
 
 struct GetPeersResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -270,9 +218,6 @@ struct Response FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Seeder::HelloResponse *response_as_HelloResponse() const {
     return response_type() == Seeder::ResponseType_HelloResponse ? static_cast<const Seeder::HelloResponse *>(response()) : nullptr;
   }
-  const Seeder::PingResponse *response_as_PingResponse() const {
-    return response_type() == Seeder::ResponseType_PingResponse ? static_cast<const Seeder::PingResponse *>(response()) : nullptr;
-  }
   const Seeder::GetPeersResponse *response_as_GetPeersResponse() const {
     return response_type() == Seeder::ResponseType_GetPeersResponse ? static_cast<const Seeder::GetPeersResponse *>(response()) : nullptr;
   }
@@ -288,10 +233,6 @@ struct Response FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 template<> inline const Seeder::HelloResponse *Response::response_as<Seeder::HelloResponse>() const {
   return response_as_HelloResponse();
-}
-
-template<> inline const Seeder::PingResponse *Response::response_as<Seeder::PingResponse>() const {
-  return response_as_PingResponse();
 }
 
 template<> inline const Seeder::GetPeersResponse *Response::response_as<Seeder::GetPeersResponse>() const {
@@ -341,10 +282,6 @@ inline bool VerifyResponseType(flatbuffers::Verifier &verifier, const void *obj,
     }
     case ResponseType_HelloResponse: {
       auto ptr = reinterpret_cast<const Seeder::HelloResponse *>(obj);
-      return verifier.VerifyTable(ptr);
-    }
-    case ResponseType_PingResponse: {
-      auto ptr = reinterpret_cast<const Seeder::PingResponse *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case ResponseType_GetPeersResponse: {

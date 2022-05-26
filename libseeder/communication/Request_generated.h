@@ -11,17 +11,18 @@ namespace Seeder {
 struct HelloRequest;
 struct HelloRequestBuilder;
 
-struct PingRequest;
+struct PeerStatusRequest;
+struct PeerStatusRequestBuilder;
 
 struct GetPeersRequest;
 
 struct Request;
 struct RequestBuilder;
 
-enum RequestType {
+enum RequestType : uint8_t {
   RequestType_NONE = 0,
   RequestType_HelloRequest = 1,
-  RequestType_PingRequest = 2,
+  RequestType_PeerStatusRequest = 2,
   RequestType_GetPeersRequest = 3,
   RequestType_MIN = RequestType_NONE,
   RequestType_MAX = RequestType_GetPeersRequest
@@ -31,7 +32,7 @@ inline const RequestType (&EnumValuesRequestType())[4] {
   static const RequestType values[] = {
     RequestType_NONE,
     RequestType_HelloRequest,
-    RequestType_PingRequest,
+    RequestType_PeerStatusRequest,
     RequestType_GetPeersRequest
   };
   return values;
@@ -41,7 +42,7 @@ inline const char * const *EnumNamesRequestType() {
   static const char * const names[5] = {
     "NONE",
     "HelloRequest",
-    "PingRequest",
+    "PeerStatusRequest",
     "GetPeersRequest",
     nullptr
   };
@@ -62,8 +63,8 @@ template<> struct RequestTypeTraits<Seeder::HelloRequest> {
   static const RequestType enum_value = RequestType_HelloRequest;
 };
 
-template<> struct RequestTypeTraits<Seeder::PingRequest> {
-  static const RequestType enum_value = RequestType_PingRequest;
+template<> struct RequestTypeTraits<Seeder::PeerStatusRequest> {
+  static const RequestType enum_value = RequestType_PeerStatusRequest;
 };
 
 template<> struct RequestTypeTraits<Seeder::GetPeersRequest> {
@@ -72,23 +73,6 @@ template<> struct RequestTypeTraits<Seeder::GetPeersRequest> {
 
 bool VerifyRequestType(flatbuffers::Verifier &verifier, const void *obj, RequestType type);
 bool VerifyRequestTypeVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) PingRequest FLATBUFFERS_FINAL_CLASS {
- private:
-  uint8_t send_your_connections_;
-
- public:
-  PingRequest()
-      : send_your_connections_(0) {
-  }
-  PingRequest(bool _send_your_connections)
-      : send_your_connections_(flatbuffers::EndianScalar(static_cast<uint8_t>(_send_your_connections))) {
-  }
-  bool send_your_connections() const {
-    return flatbuffers::EndianScalar(send_your_connections_) != 0;
-  }
-};
-FLATBUFFERS_STRUCT_END(PingRequest, 1);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) GetPeersRequest FLATBUFFERS_FINAL_CLASS {
  private:
@@ -158,6 +142,72 @@ inline flatbuffers::Offset<HelloRequest> CreateHelloRequestDirect(
       address__);
 }
 
+struct PeerStatusRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef PeerStatusRequestBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ADDRESS = 4,
+    VT_PEER_CURRENT_CONNECTIONS = 6
+  };
+  const flatbuffers::String *address() const {
+    return GetPointer<const flatbuffers::String *>(VT_ADDRESS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *peer_current_connections() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_PEER_CURRENT_CONNECTIONS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_ADDRESS) &&
+           verifier.VerifyString(address()) &&
+           VerifyOffset(verifier, VT_PEER_CURRENT_CONNECTIONS) &&
+           verifier.VerifyVector(peer_current_connections()) &&
+           verifier.VerifyVectorOfStrings(peer_current_connections()) &&
+           verifier.EndTable();
+  }
+};
+
+struct PeerStatusRequestBuilder {
+  typedef PeerStatusRequest Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_address(flatbuffers::Offset<flatbuffers::String> address) {
+    fbb_.AddOffset(PeerStatusRequest::VT_ADDRESS, address);
+  }
+  void add_peer_current_connections(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> peer_current_connections) {
+    fbb_.AddOffset(PeerStatusRequest::VT_PEER_CURRENT_CONNECTIONS, peer_current_connections);
+  }
+  explicit PeerStatusRequestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  flatbuffers::Offset<PeerStatusRequest> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<PeerStatusRequest>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<PeerStatusRequest> CreatePeerStatusRequest(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> address = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> peer_current_connections = 0) {
+  PeerStatusRequestBuilder builder_(_fbb);
+  builder_.add_peer_current_connections(peer_current_connections);
+  builder_.add_address(address);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<PeerStatusRequest> CreatePeerStatusRequestDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *address = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *peer_current_connections = nullptr) {
+  auto address__ = address ? _fbb.CreateString(address) : 0;
+  auto peer_current_connections__ = peer_current_connections ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*peer_current_connections) : 0;
+  return Seeder::CreatePeerStatusRequest(
+      _fbb,
+      address__,
+      peer_current_connections__);
+}
+
 struct Request FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RequestBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -178,8 +228,8 @@ struct Request FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const Seeder::HelloRequest *request_as_HelloRequest() const {
     return request_type() == Seeder::RequestType_HelloRequest ? static_cast<const Seeder::HelloRequest *>(request()) : nullptr;
   }
-  const Seeder::PingRequest *request_as_PingRequest() const {
-    return request_type() == Seeder::RequestType_PingRequest ? static_cast<const Seeder::PingRequest *>(request()) : nullptr;
+  const Seeder::PeerStatusRequest *request_as_PeerStatusRequest() const {
+    return request_type() == Seeder::RequestType_PeerStatusRequest ? static_cast<const Seeder::PeerStatusRequest *>(request()) : nullptr;
   }
   const Seeder::GetPeersRequest *request_as_GetPeersRequest() const {
     return request_type() == Seeder::RequestType_GetPeersRequest ? static_cast<const Seeder::GetPeersRequest *>(request()) : nullptr;
@@ -198,8 +248,8 @@ template<> inline const Seeder::HelloRequest *Request::request_as<Seeder::HelloR
   return request_as_HelloRequest();
 }
 
-template<> inline const Seeder::PingRequest *Request::request_as<Seeder::PingRequest>() const {
-  return request_as_PingRequest();
+template<> inline const Seeder::PeerStatusRequest *Request::request_as<Seeder::PeerStatusRequest>() const {
+  return request_as_PeerStatusRequest();
 }
 
 template<> inline const Seeder::GetPeersRequest *Request::request_as<Seeder::GetPeersRequest>() const {
@@ -251,8 +301,9 @@ inline bool VerifyRequestType(flatbuffers::Verifier &verifier, const void *obj, 
       auto ptr = reinterpret_cast<const Seeder::HelloRequest *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case RequestType_PingRequest: {
-      return verifier.Verify<Seeder::PingRequest>(static_cast<const uint8_t *>(obj), 0);
+    case RequestType_PeerStatusRequest: {
+      auto ptr = reinterpret_cast<const Seeder::PeerStatusRequest *>(obj);
+      return verifier.VerifyTable(ptr);
     }
     case RequestType_GetPeersRequest: {
       return verifier.Verify<Seeder::GetPeersRequest>(static_cast<const uint8_t *>(obj), 0);

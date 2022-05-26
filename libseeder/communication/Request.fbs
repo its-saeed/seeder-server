@@ -4,15 +4,16 @@ table HelloRequest {
     address: string;
 }
 
-struct PingRequest {
-    send_your_connections: bool;
+table PeerStatusRequest {
+    address: string;
+    peer_current_connections: [string];
 }
 
 struct GetPeersRequest {
     number_of_peers: byte;
 }
 
-union RequestType { HelloRequest, PingRequest, GetPeersRequest }
+union RequestType { HelloRequest, PeerStatusRequest, GetPeersRequest }
 
 table Request {
     id: ushort;

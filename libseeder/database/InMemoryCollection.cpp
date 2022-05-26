@@ -9,6 +9,7 @@ bool InMemoryCollection::add_client(Client&& client)
 		return false;
 	}
 
+	logging::log()->info("Client {} added to Client manager.", client.get_address());
 	active_clients.insert(std::make_pair(client.get_address(), std::move(client)));
 	return true;
 }

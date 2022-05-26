@@ -7,17 +7,14 @@ enum HelloRequestResult: byte {
 
 table HelloResponse {
     result: HelloRequestResult;
-}
-
-table PingResponse {
-    peer_current_connections: [string];
+    availability_interval: byte;        // Hey Client! Please send me your availability based on this interval.
 }
 
 table GetPeersResponse {
     active_peers: [string];
 }
 
-union ResponseType { HelloResponse, PingResponse, GetPeersResponse}
+union ResponseType { HelloResponse, GetPeersResponse}
 
 table Response {
     id: ushort;
