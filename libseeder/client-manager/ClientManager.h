@@ -30,7 +30,7 @@ public:
 
 	std::vector<std::string> get_active_nodes(int count)
 	{
-		return { "1", "2", "3" };
+		return persistor.get_active_clients(count);
 	}
 
 private:

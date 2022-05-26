@@ -33,3 +33,16 @@ size_t InMemoryCollection::get_clients_count() const noexcept
 {
 	return active_clients.size();
 }
+
+std::vector<std::string> InMemoryCollection::get_active_clients(int count)
+{
+	// TODO: Consider performance here.
+	int added = 0;
+	std::vector<std::string> active;
+	for (auto const& [key, val] : active_clients)
+	{
+		active.push_back(key);
+	}
+
+	return active;
+}
