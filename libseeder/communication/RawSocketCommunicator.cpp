@@ -1,7 +1,8 @@
 #include "RawSocketCommunicator.h"
 
-#include <evpp/tcp_server.h>
-#include <evpp/timestamp.h>
+#include <evpp/udp/udp_server.h>
+#include <evpp/event_loop_thread_pool.h>
+#include <evpp/event_loop.h>
 
 #include "SpdLogger.h"
 #include "Response_generated.h"
@@ -15,56 +16,55 @@ RawSocketCommunicator::RawSocketCommunicator(InMemoryClientManager* client_manag
 
 void RawSocketCommunicator::run()
 {
-    std::string addr = "0.0.0.0:9099";
-    int thread_num = 4;
-    evpp::EventLoop loop;
-    evpp::TCPServer server(&loop, addr, "Seeder Tcp Server", thread_num);
-    server.SetMessageCallback([this](const evpp::TCPConnPtr& conn, evpp::Buffer* msg) {
-        // TODO: Handle concurrency
-        auto request = parse_buffer(msg);
-        logging::log()->info("New request of type {} with ID {}",
-            request_type_to_string(request->request_type()), request->id());
+    const int thread_num = 5;
+    std::vector<int> ports;
+    for (int i = 0; i < 5; ++i)
+        ports.push_back(beginning_port + i);
+
+	evpp::udp::Server server;
+	server.SetThreadDispatchPolicy(evpp::ThreadDispatchPolicy::kIPAddressHashing);
+	server.SetMessageHandler([this](evpp::EventLoop* loop, evpp::udp::MessagePtr& msg) {
+        auto request = parse_datagram(msg);
+        logging::log()->info("New request of type {} with ID {} from {}",
+            request_type_to_string(request->request_type()), request->id(),
+            msg->remote_ip());
 
         switch (request->request_type())
         {
         case Seeder::RequestType_HelloRequest:
-            handle_hello_request(conn, request);
+            handle_hello_request(request, msg);
             break;
         case Seeder::RequestType_GetPeersRequest:
-            handle_get_peers_request(conn, request);
+            handle_get_peers_request(request, msg);
             break;
         default:
             logging::log()->warn("Unknown request type {}", request->request_type());
             break;
         }
-    });
-    server.SetConnectionCallback([](const evpp::TCPConnPtr& conn) {
-        if (conn->IsConnected()) {
-            logging::log()->info("new connection from {}", conn->AddrToString());
-        } else {
-            logging::log()->info("disconnected from {}", conn->AddrToString());
-        }
-    });
-    server.Init();
-    if (server.Start())
-        logging::log()->info("TCP Server started successfully...");
-    else{
-        logging::log()->critical("Failed to start TCP server.");
-        exit(EXIT_FAILURE);
-    }
-    loop.Run();
+		});
+	server.Init(ports);
+	server.Start();
+
+	evpp::EventLoop loop;
+	std::shared_ptr<evpp::EventLoopThreadPool> tpool(new evpp::EventLoopThreadPool(&loop, thread_num));
+	tpool->Start(true);
+	server.SetEventLoopThreadPool(tpool);
+	loop.Run();
+	server.Stop(true);
+	tpool->Stop(true);
 }
 
-const Seeder::Request* RawSocketCommunicator::parse_buffer(evpp::Buffer* buffer)
+const Seeder::Request* RawSocketCommunicator::parse_datagram(evpp::udp::MessagePtr& msg)
 {
-    const uint16_t incoming_data_size = buffer->ReadInt16();
-    const char* data = buffer->data();
+    const uint16_t incoming_data_size = msg->ReadInt16();
+    logging::log()->warn("{}", incoming_data_size);
+    const char* data = msg->data();
 
     return Seeder::GetRequest(data);
 }
 
-void RawSocketCommunicator::handle_hello_request(const evpp::TCPConnPtr& conn,
-    const Seeder::Request* request)
+void RawSocketCommunicator::handle_hello_request(
+    const Seeder::Request* request, evpp::udp::MessagePtr& msg)
 {
     flatbuffers::FlatBufferBuilder builder(100);
     flatbuffers::Offset<Seeder::HelloResponse> response;
@@ -84,11 +84,13 @@ void RawSocketCommunicator::handle_hello_request(const evpp::TCPConnPtr& conn,
 	const uint8_t* buffer = builder.GetBufferPointer();
 	const size_t size = builder.GetSize();
 
-    conn->Send(buffer, size);
+    if (evpp::udp::SendMessage(msg->sockfd(), msg->remote_addr(), 
+        reinterpret_cast<const char*>(buffer), size))
+        logging::log()->info("sending {} bytes", size);
 }
 
-void RawSocketCommunicator::handle_get_peers_request(const evpp::TCPConnPtr& conn,
-    const Seeder::Request* request)
+void RawSocketCommunicator::handle_get_peers_request(
+    const Seeder::Request* request, evpp::udp::MessagePtr& msg)
 {
     flatbuffers::FlatBufferBuilder builder(1000);
 
@@ -110,7 +112,9 @@ void RawSocketCommunicator::handle_get_peers_request(const evpp::TCPConnPtr& con
 	const uint8_t* buffer = builder.GetBufferPointer();
 	const size_t size = builder.GetSize();
 
-    conn->Send(buffer, size);
+    if (evpp::udp::SendMessage(msg->sockfd(), msg->remote_addr(), 
+        reinterpret_cast<const char*>(buffer), size))
+        logging::log()->info("sending {} bytes", size);
 }
 
 std::string RawSocketCommunicator::request_type_to_string(Seeder::RequestType request_type)
