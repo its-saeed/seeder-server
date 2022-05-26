@@ -6,12 +6,13 @@
 
 #include "Thread.h"
 #include "ClientManager.h"
+#include "ArgumentParser.h"
 #include "Request_generated.h"
 
 class RawSocketCommunicator : public Thread
 {
 public:
-	RawSocketCommunicator(InMemoryClientManager* client_manager);
+	RawSocketCommunicator(InMemoryClientManager* client_manager, const Argument& args);
 	void run() override;
 
 private:
@@ -20,6 +21,7 @@ private:
 	void handle_hello_request(const evpp::TCPConnPtr& conn, const Seeder::Request* request);
 	void handle_get_peers_request(const evpp::TCPConnPtr& conn, const Seeder::Request* request);
 
+	uint16_t beginning_port;
 	InMemoryClientManager* client_manager;
 };
 

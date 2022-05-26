@@ -6,9 +6,11 @@
 #include "SpdLogger.h"
 #include "Response_generated.h"
 
-RawSocketCommunicator::RawSocketCommunicator(InMemoryClientManager* client_manager)
-: client_manager(client_manager)
+RawSocketCommunicator::RawSocketCommunicator(InMemoryClientManager* client_manager, const Argument& args)
+: beginning_port(args.beginning_port)
+, client_manager(client_manager)
 {
+
 }
 
 void RawSocketCommunicator::run()
@@ -17,10 +19,8 @@ void RawSocketCommunicator::run()
     int thread_num = 4;
     evpp::EventLoop loop;
     evpp::TCPServer server(&loop, addr, "Seeder Tcp Server", thread_num);
-    server.SetMessageCallback([this](const evpp::TCPConnPtr& conn,
-                                 evpp::Buffer* msg) {
+    server.SetMessageCallback([this](const evpp::TCPConnPtr& conn, evpp::Buffer* msg) {
         // TODO: Handle concurrency
-        
         auto request = parse_buffer(msg);
         logging::log()->info("New request of type {} with ID {}",
             request_type_to_string(request->request_type()), request->id());
@@ -34,6 +34,7 @@ void RawSocketCommunicator::run()
             handle_get_peers_request(conn, request);
             break;
         default:
+            logging::log()->warn("Unknown request type {}", request->request_type());
             break;
         }
     });

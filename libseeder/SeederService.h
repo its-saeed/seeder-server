@@ -8,8 +8,8 @@ template<typename CommunicationChannel>
 class SeederService
 {
 public:
-	SeederService(Argument arguments)
-	: communication_channel(&client_manager)
+	SeederService(const Argument& arguments)
+	: communication_channel(&client_manager, arguments)
 	{
 	}
 
