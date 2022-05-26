@@ -13,8 +13,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
 
 target_include_directories(libseeder PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/argument-parser
-		${CMAKE_CURRENT_SOURCE_DIR}/client-manager
-		${CMAKE_CURRENT_SOURCE_DIR}/utils
+		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/client-manager
+		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/utils
 		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/database
 		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/communication
 		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/logger)

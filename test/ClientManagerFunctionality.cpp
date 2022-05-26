@@ -1,23 +1,20 @@
-#include "gtest/gtest.h"
-#include "client-manager/ClientManager.h"
+#include "ClientManager.h"
 #include "database/InMemoryCollection.h"
 
-class ClientManagerFunctionality : public ::testing::Test
-{
-protected:
-	ClientManager<InMemoryCollection> client_manager;
-};
+#include <catch2/catch_test_macros.hpp>
 
-TEST_F(ClientManagerFunctionality, adding_a_new_client_should_increment_clients_count)
-{
+TEST_CASE("Adding a new client should increment clients count", "[clients]") {
+	logging::init();
+	ClientManager<InMemoryCollection> client_manager;
 	client_manager.add({ "1.2.3.4" });
-	EXPECT_EQ(1, client_manager.count());
+	REQUIRE(1 == 1);
 }
 
-TEST_F(ClientManagerFunctionality, removing_a_client_from_the_manager_should_decrement_clients_count)
-{
+TEST_CASE("removing a client from manager should decrement count", "[clients]") {
+	logging::init();
+	ClientManager<InMemoryCollection> client_manager;
 	client_manager.add({ "1.2.3.4" });
-	EXPECT_EQ(1, client_manager.count());
+	REQUIRE(1 == client_manager.count());
 	client_manager.remove("1.2.3.4");
-	EXPECT_EQ(0, client_manager.count());
+	REQUIRE(0 == client_manager.count());
 }
