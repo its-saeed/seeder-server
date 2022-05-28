@@ -3,25 +3,31 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Adding a new client should increment clients count", "[clients]") {
-	logging::init();
+class ClientManagerFunctionalityFixture
+{
+protected:
 	ClientManager<InMemoryDatabase> client_manager;
+};
+
+TEST_CASE_METHOD(ClientManagerFunctionalityFixture, 
+		"Adding a new client should increment clients count", "[clients]") {
+	logging::init();
 	client_manager.add({ "1.2.3.4" });
 	REQUIRE(1 == 1);
 }
 
-TEST_CASE("removing a client from manager should decrement count", "[clients]") {
+TEST_CASE_METHOD(ClientManagerFunctionalityFixture, 
+		"removing a client from manager should decrement count", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.4" });
 	REQUIRE(1 == client_manager.count());
 	client_manager.remove("1.2.3.4");
 	REQUIRE(0 == client_manager.count());
 }
 
-TEST_CASE("getting first 3 clients based on last alive should return correct ones", "[clients]") {
+TEST_CASE_METHOD(ClientManagerFunctionalityFixture, 
+		"getting first 3 clients based on last alive should return correct ones", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.1" });
 	client_manager.add({ "1.2.3.2" });
 	client_manager.add({ "1.2.3.3" });
@@ -41,9 +47,9 @@ TEST_CASE("getting first 3 clients based on last alive should return correct one
 	REQUIRE("1.2.3.5" == nodes[2]->get_address());
 }
 
-TEST_CASE("getting clients which are alive since a specific time should return them", "[clients]") {
+TEST_CASE_METHOD(ClientManagerFunctionalityFixture, 
+		"getting clients which are alive since a specific time should return them", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.1" });
 	client_manager.add({ "1.2.3.2" });
 	client_manager.add({ "1.2.3.3" });
