@@ -1,4 +1,6 @@
 #include "InMemoryCollection.h"
+
+#include <iterator>
 #include "SpdLogger.h"
 
 bool InMemoryCollection::add_client(Client&& client)
@@ -10,40 +12,69 @@ bool InMemoryCollection::add_client(Client&& client)
 	}
 
 	logging::log()->info("Client {} added to Client manager.", client.get_address());
-	active_clients.insert(std::make_pair(client.get_address(), std::move(client)));
+
+	auto shared_client = std::make_shared<Client>(std::move(client));
+	active_clients.insert(std::make_pair(shared_client->get_address(), shared_client));
+	auto inserted_at = last_alive_ordered_client_set.insert(shared_client);
+	shared_client->set_inserted_at_iterator(inserted_at);
 	return true;
 }
 
 void InMemoryCollection::remove_client(const std::string& address)
 {
-	if (active_clients.find(address) == active_clients.end())
+	auto client = active_clients.find(address);
+
+	if (client == active_clients.end())
 	{
 		logging::log()->warn("Trying to remove a non-existing client with address {}", address);
 		return;
 	}
 
+	last_alive_ordered_client_set.erase(client->second->get_inserted_at_iterator());
 	active_clients.erase(address);
 }
 
-void InMemoryCollection::touch_client(const std::string& address)
+void InMemoryCollection::touch_client(const std::string& address, time_t alive_timestamp)
 {
-	throw std::logic_error("The method or operation is not implemented.");
+	auto client = active_clients.find(address);
+
+	if (client == active_clients.end())
+	{
+		logging::log()->warn("Trying to touch(update alive) a non-existing client with address {}", address);
+		return;
+	}
+
+	client->second->set_last_alive(alive_timestamp);
+
+	// Reorder the client based on new timestamp
+	last_alive_ordered_client_set.erase(client->second->get_inserted_at_iterator());
+	auto inserted_at = last_alive_ordered_client_set.insert(client->second);
+	client->second->set_inserted_at_iterator(inserted_at);
 }
 
 size_t InMemoryCollection::get_clients_count() const noexcept
 {
+	assert(active_clients.size() == last_alive_ordered_client_set.size());
 	return active_clients.size();
 }
 
-std::vector<std::string> InMemoryCollection::get_active_clients(int count)
+std::vector<SharedClient> InMemoryCollection::get_active_clients(size_t count)
 {
-	// TODO: Consider performance here.
-	int added = 0;
-	std::vector<std::string> active;
-	for (auto const& [key, val] : active_clients)
-	{
-		active.push_back(key);
-	}
+	std::vector<SharedClient> active;
+	std::copy(last_alive_ordered_client_set.cbegin(),
+		std::next(last_alive_ordered_client_set.cbegin(), count),
+		std::back_inserter(active));
+	return active;
+}
 
+std::vector<SharedClient> InMemoryCollection::get_alive_nodes_since(time_t since)
+{
+	std::vector<SharedClient> active;
+
+	SharedClient fake_shared = std::make_shared<Client>("");
+	fake_shared->set_last_alive(since);
+	std::copy(last_alive_ordered_client_set.cbegin(),
+		last_alive_ordered_client_set.upper_bound(fake_shared),
+		std::back_inserter(active));
 	return active;
 }

@@ -13,7 +13,6 @@ class ClientManager
 public:
 	bool add(Client&& client)
 	{
-		logging::log()->info("Client {} added to Client manager.", client.get_address());
 		return persistor.add_client(std::move(client));
 	}
 
@@ -28,9 +27,19 @@ public:
 		return persistor.get_clients_count();
 	}
 
-	std::vector<std::string> get_active_nodes(int count)
+	std::vector<SharedClient> get_active_nodes(size_t count)
 	{
 		return persistor.get_active_clients(count);
+	}
+
+	void touch(const std::string& address, time_t alive_timestamp)
+	{
+		persistor.touch_client(address, alive_timestamp);
+	}
+
+	std::vector<SharedClient> get_alive_nodes_since(time_t since)
+	{
+		return persistor.get_alive_nodes_since(since);
 	}
 
 private:

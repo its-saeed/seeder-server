@@ -110,7 +110,7 @@ void RawSocketCommunicator::handle_get_peers_request(
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
     for (const auto& peer : peers) {
-        active_peers.push_back(builder.CreateString(peer));
+        active_peers.push_back(builder.CreateString(peer->get_address()));
     }
     auto response = Seeder::CreateGetPeersResponse(builder, builder.CreateVector(active_peers));
 

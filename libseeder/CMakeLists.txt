@@ -1,7 +1,8 @@
 add_library(libseeder argument-parser/ArgumentParser.cpp
 		logger/SpdLogger.cpp
 		communication/RawSocketCommunicator.cpp
-		database/InMemoryCollection.cpp)
+		database/InMemoryCollection.cpp
+		client-manager/Client.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/argument-parser
