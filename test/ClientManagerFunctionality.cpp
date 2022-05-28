@@ -1,18 +1,18 @@
 #include "ClientManager.h"
-#include "database/InMemoryCollection.h"
+#include "database/InMemoryDatabase.h"
 
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Adding a new client should increment clients count", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryCollection> client_manager;
+	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.4" });
 	REQUIRE(1 == 1);
 }
 
 TEST_CASE("removing a client from manager should decrement count", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryCollection> client_manager;
+	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.4" });
 	REQUIRE(1 == client_manager.count());
 	client_manager.remove("1.2.3.4");
@@ -21,7 +21,7 @@ TEST_CASE("removing a client from manager should decrement count", "[clients]") 
 
 TEST_CASE("getting first 3 clients based on last alive should return correct ones", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryCollection> client_manager;
+	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.1" });
 	client_manager.add({ "1.2.3.2" });
 	client_manager.add({ "1.2.3.3" });
@@ -43,7 +43,7 @@ TEST_CASE("getting first 3 clients based on last alive should return correct one
 
 TEST_CASE("getting clients which are alive since a specific time should return them", "[clients]") {
 	logging::init();
-	ClientManager<InMemoryCollection> client_manager;
+	ClientManager<InMemoryDatabase> client_manager;
 	client_manager.add({ "1.2.3.1" });
 	client_manager.add({ "1.2.3.2" });
 	client_manager.add({ "1.2.3.3" });
@@ -56,7 +56,7 @@ TEST_CASE("getting clients which are alive since a specific time should return t
 	client_manager.touch("1.2.3.4", 30);
 	client_manager.touch("1.2.3.5", 6);
 
-	auto nodes = client_manager.get_alive_nodes_since(10);
+	auto nodes = client_manager.get_alive_peers_since(10);
 
 	REQUIRE("1.2.3.4" == nodes[0]->get_address());
 	REQUIRE("1.2.3.1" == nodes[1]->get_address());

@@ -1,9 +1,9 @@
-#include "InMemoryCollection.h"
+#include "InMemoryDatabase.h"
 
 #include <iterator>
 #include "SpdLogger.h"
 
-bool InMemoryCollection::add_client(Client&& client)
+bool InMemoryDatabase::add_client(Client&& client)
 {
 	if (active_clients.find(client.get_address()) != active_clients.end())
 	{
@@ -20,7 +20,7 @@ bool InMemoryCollection::add_client(Client&& client)
 	return true;
 }
 
-void InMemoryCollection::remove_client(const std::string& address)
+void InMemoryDatabase::remove_client(const std::string& address)
 {
 	auto client = active_clients.find(address);
 
@@ -34,7 +34,7 @@ void InMemoryCollection::remove_client(const std::string& address)
 	active_clients.erase(address);
 }
 
-void InMemoryCollection::touch_client(const std::string& address, time_t alive_timestamp)
+void InMemoryDatabase::touch_client(const std::string& address, time_t alive_timestamp)
 {
 	auto client = active_clients.find(address);
 
@@ -52,13 +52,13 @@ void InMemoryCollection::touch_client(const std::string& address, time_t alive_t
 	client->second->set_inserted_at_iterator(inserted_at);
 }
 
-size_t InMemoryCollection::get_clients_count() const noexcept
+size_t InMemoryDatabase::get_clients_count() const noexcept
 {
 	assert(active_clients.size() == last_alive_ordered_client_set.size());
 	return active_clients.size();
 }
 
-std::vector<SharedClient> InMemoryCollection::get_active_clients(size_t count)
+std::vector<SharedClient> InMemoryDatabase::get_active_clients(size_t count)
 {
 	std::vector<SharedClient> active;
 	std::copy(last_alive_ordered_client_set.cbegin(),
@@ -67,7 +67,7 @@ std::vector<SharedClient> InMemoryCollection::get_active_clients(size_t count)
 	return active;
 }
 
-std::vector<SharedClient> InMemoryCollection::get_alive_nodes_since(time_t since)
+std::vector<SharedClient> InMemoryDatabase::get_alive_peers_since(time_t since)
 {
 	std::vector<SharedClient> active;
 

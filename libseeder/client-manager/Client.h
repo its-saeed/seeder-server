@@ -40,6 +40,7 @@ public:
 
 	LastAliveOrderedClientSet::iterator get_inserted_at_iterator() const { return inserted_at; }
 	void set_inserted_at_iterator(LastAliveOrderedClientSet::iterator val) { inserted_at = val; }
+
 private:
 	std::string address;
 	time_t last_alive;
