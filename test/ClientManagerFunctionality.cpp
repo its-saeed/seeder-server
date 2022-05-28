@@ -28,13 +28,13 @@ TEST_CASE("getting first 3 clients based on last alive should return correct one
 	client_manager.add({ "1.2.3.4" });
 	client_manager.add({ "1.2.3.5" });
 
-	client_manager.touch("1.2.3.1", 10);
-	client_manager.touch("1.2.3.2", 2);
-	client_manager.touch("1.2.3.3", 3);
-	client_manager.touch("1.2.3.4", 30);
-	client_manager.touch("1.2.3.5", 6);
+	client_manager.set_number_of_connections_of("1.2.3.1", 2);
+	client_manager.set_number_of_connections_of("1.2.3.2", 5);
+	client_manager.set_number_of_connections_of("1.2.3.3", 8);
+	client_manager.set_number_of_connections_of("1.2.3.4", 1);
+	client_manager.set_number_of_connections_of("1.2.3.5", 3);
 
-	auto nodes = client_manager.get_active_nodes(3);
+	auto nodes = client_manager.get_elited_peers(3);
 
 	REQUIRE("1.2.3.4" == nodes[0]->get_address());
 	REQUIRE("1.2.3.1" == nodes[1]->get_address());

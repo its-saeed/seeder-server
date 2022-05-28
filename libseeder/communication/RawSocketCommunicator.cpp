@@ -106,7 +106,7 @@ void RawSocketCommunicator::handle_get_peers_request(
 {
     flatbuffers::FlatBufferBuilder builder(1000);
 
-    const auto peers = client_manager->get_active_nodes(request->request_as_GetPeersRequest()->number_of_peers());
+    const auto peers = client_manager->get_elited_peers(request->request_as_GetPeersRequest()->number_of_peers());
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
     for (const auto& peer : peers) {

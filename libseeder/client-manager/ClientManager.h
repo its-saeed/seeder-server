@@ -27,9 +27,9 @@ public:
 		return database.get_clients_count();
 	}
 
-	std::vector<SharedClient> get_active_nodes(size_t count)
+	std::vector<SharedClient> get_elited_peers(size_t count)
 	{
-		return database.get_active_clients(count);
+		return database.get_elited_peers(count);
 	}
 
 	void touch(const std::string& address, time_t alive_timestamp)
@@ -40,6 +40,11 @@ public:
 	std::vector<SharedClient> get_alive_peers_since(time_t since)
 	{
 		return database.get_alive_peers_since(since);
+	}
+
+	void set_number_of_connections_of(const std::string& address, size_t n)
+	{
+		return database.set_number_of_connections_of(address, n);
 	}
 
 private:
