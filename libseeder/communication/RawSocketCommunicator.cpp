@@ -40,6 +40,9 @@ void RawSocketCommunicator::run()
         case Seeder::RequestType_PeerStatusRequest:
             handle_peer_status_request(request, msg);
             break;
+        case Seeder::RequestType_ByeRequest:
+            handle_bye_request(request, msg);
+            break;
         default:
             logging::log()->warn("Unknown request type {}", request->request_type());
             break;
@@ -147,6 +150,12 @@ void RawSocketCommunicator::handle_peer_status_request(const Seeder::Request* re
         status_request->address()->str(),
         status_request->peer_current_connections()->size(),
         connections_string);
+}
+
+void RawSocketCommunicator::handle_bye_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg)
+{
+    auto bye_request = request->request_as_ByeRequest();
+    client_manager->remove(bye_request->address()->str());
 }
 
 std::string RawSocketCommunicator::request_type_to_string(Seeder::RequestType request_type)

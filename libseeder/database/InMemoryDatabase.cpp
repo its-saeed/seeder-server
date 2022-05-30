@@ -34,6 +34,7 @@ void InMemoryDatabase::remove_client(const std::string& address)
 		return;
 	}
 
+	logging::log()->info("Client {} removed from Client manager.", address);
 	last_alive_ordered_client_set.erase(client->second->get_last_alive_set_inserted_at_iterator());
 	elite_client_set.erase(client->second->get_elite_set_inserted_at_iterator());
 	active_clients.erase(address);

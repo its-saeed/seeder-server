@@ -18,7 +18,6 @@ public:
 
 	void remove(const std::string& address)
 	{
-		logging::log()->info("Client {} removed from Client manager.", address);
 		database.remove_client(address);
 	}
 
