@@ -124,9 +124,9 @@ void RawSocketCommunicator::handle_get_peers_request(
 	const uint8_t* buffer = builder.GetBufferPointer();
 	const size_t size = builder.GetSize();
 
-    if (evpp::udp::SendMessage(msg->sockfd(), msg->remote_addr(), 
+    if (!evpp::udp::SendMessage(msg->sockfd(), msg->remote_addr(), 
         reinterpret_cast<const char*>(buffer), size))
-        logging::log()->info("sending {} bytes", size);
+        logging::log()->critical("Failed to send {} bytes to client.", size);
 }
 
 void RawSocketCommunicator::handle_peer_status_request(const Seeder::Request* request,
@@ -138,6 +138,10 @@ void RawSocketCommunicator::handle_peer_status_request(const Seeder::Request* re
         const std::string connection = status_request->peer_current_connections()->GetAsString(i)->str();
         connections_string += connection + ", ";
     }
+
+    client_manager->touch(status_request->address()->str(), time(0));
+    client_manager->set_number_of_connections_of(status_request->address()->str(),
+        status_request->peer_current_connections()->size());
 
     logging::log()->info("Peer {} is alive and has {} connections with: {}",
         status_request->address()->str(),

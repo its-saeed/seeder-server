@@ -65,9 +65,12 @@ size_t InMemoryDatabase::get_clients_count() const noexcept
 
 std::vector<SharedClient> InMemoryDatabase::get_elited_peers(size_t count)
 {
+	logging::log()->warn("Getting elited count: {}, size: {}", count,
+		elite_client_set.size());
+
 	std::vector<SharedClient> active;
 	std::copy(elite_client_set.cbegin(),
-		std::next(elite_client_set.cbegin(), count),
+		std::next(elite_client_set.cbegin(), std::min(count, elite_client_set.size())),
 		std::back_inserter(active));
 	return active;
 }
@@ -97,7 +100,7 @@ void InMemoryDatabase::set_number_of_connections_of(const std::string& address, 
 	client->second->set_number_of_connections(n);
 
 	// Reorder the client based on new timestamp
-	last_alive_ordered_client_set.erase(client->second->get_elite_set_inserted_at_iterator());
+	elite_client_set.erase(client->second->get_elite_set_inserted_at_iterator());
 	auto inserted_at = elite_client_set.insert(client->second);
 	client->second->set_elite_set_inserted_at_iterator(inserted_at);
 }
