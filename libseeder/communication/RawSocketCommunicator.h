@@ -18,13 +18,14 @@ private:
 	static std::string request_type_to_string(Seeder::RequestType request_type);
 	const Seeder::Request* parse_datagram(evpp::udp::MessagePtr& msg);
 	void handle_hello_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg);
-	void handle_get_peers_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg);
+	void handle_get_elited_peers_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg);
 	void handle_peer_status_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg);
 	void handle_bye_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg);
 
 	uint16_t beginning_port;
 	std::chrono::seconds peer_availability_interval;
 	InMemoryClientManager* client_manager;
+	void handle_get_peers_by_last_alive_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg);
 };
 
 #endif // RawSocketCommunicator_h__

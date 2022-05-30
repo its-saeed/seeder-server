@@ -34,8 +34,11 @@ void RawSocketCommunicator::run()
         case Seeder::RequestType_HelloRequest:
             handle_hello_request(request, msg);
             break;
-        case Seeder::RequestType_GetPeersRequest:
-            handle_get_peers_request(request, msg);
+        case Seeder::RequestType_GetElitedPeersRequest:
+            handle_get_elited_peers_request(request, msg);
+            break;
+        case Seeder::RequestType_GetPeersByLastAliveRequest:
+            handle_get_peers_by_last_alive_request(request, msg);
             break;
         case Seeder::RequestType_PeerStatusRequest:
             handle_peer_status_request(request, msg);
@@ -104,23 +107,24 @@ void RawSocketCommunicator::handle_hello_request(
         logging::log()->critical("Failed to send the response to the peer");
 }
 
-void RawSocketCommunicator::handle_get_peers_request(
+void RawSocketCommunicator::handle_get_elited_peers_request(
     const Seeder::Request* request, evpp::udp::MessagePtr& msg)
 {
     flatbuffers::FlatBufferBuilder builder(1000);
 
-    const auto peers = client_manager->get_elited_peers(request->request_as_GetPeersRequest()->number_of_peers());
+    const auto peers = client_manager->get_elited_peers(
+        request->request_as_GetElitedPeersRequest()->number_of_peers());
 
     std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
     for (const auto& peer : peers) {
         active_peers.push_back(builder.CreateString(peer->get_address()));
     }
-    auto response = Seeder::CreateGetPeersResponse(builder, builder.CreateVector(active_peers));
+    auto response = Seeder::CreateGetElitedPeersResponse(builder, builder.CreateVector(active_peers));
 
     auto response_builder = Seeder::ResponseBuilder(builder);
     response_builder.add_id(request->id());
     response_builder.add_response(response.Union());
-    response_builder.add_response_type(Seeder::ResponseType_GetPeersResponse);
+    response_builder.add_response_type(Seeder::ResponseType_GetElitedPeersResponse);
 
 	auto orc = response_builder.Finish();
 	builder.Finish(orc);
@@ -142,12 +146,14 @@ void RawSocketCommunicator::handle_peer_status_request(const Seeder::Request* re
         connections_string += connection + ", ";
     }
 
-    client_manager->touch(status_request->address()->str(), time(0));
+    const time_t last_alive = status_request->last_alive();
+    client_manager->touch(status_request->address()->str(), last_alive);
     client_manager->set_number_of_connections_of(status_request->address()->str(),
         status_request->peer_current_connections()->size());
 
-    logging::log()->info("Peer {} is alive and has {} connections with: {}",
+    logging::log()->info("Peer {} is alive ({}) and has {} connections with: {}",
         status_request->address()->str(),
+        last_alive,
         status_request->peer_current_connections()->size(),
         connections_string);
 }
@@ -158,6 +164,38 @@ void RawSocketCommunicator::handle_bye_request(const Seeder::Request* request, e
     client_manager->remove(bye_request->address()->str());
 }
 
+void RawSocketCommunicator::handle_get_peers_by_last_alive_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg)
+{
+    flatbuffers::FlatBufferBuilder builder(1000);
+
+    const auto peers = client_manager->get_alive_peers_since(
+        request->request_as_GetPeersByLastAliveRequest()->last_alive_since());
+
+
+    logging::log()->info("Getting alive peers since: {}", 
+        request->request_as_GetPeersByLastAliveRequest()->last_alive_since());
+
+    std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
+    for (const auto& peer : peers) {
+        active_peers.push_back(builder.CreateString(peer->get_address()));
+    }
+    auto response = Seeder::CreateGetAlivePeersResponse(builder, builder.CreateVector(active_peers));
+
+    auto response_builder = Seeder::ResponseBuilder(builder);
+    response_builder.add_id(request->id());
+    response_builder.add_response(response.Union());
+    response_builder.add_response_type(Seeder::ResponseType_GetAlivePeersResponse);
+
+	auto orc = response_builder.Finish();
+	builder.Finish(orc);
+	const uint8_t* buffer = builder.GetBufferPointer();
+	const size_t size = builder.GetSize();
+
+    if (!evpp::udp::SendMessage(msg->sockfd(), msg->remote_addr(), 
+        reinterpret_cast<const char*>(buffer), size))
+        logging::log()->critical("Failed to send {} bytes to client.", size);
+}
+
 std::string RawSocketCommunicator::request_type_to_string(Seeder::RequestType request_type)
 {
     switch (request_type)
@@ -166,8 +204,10 @@ std::string RawSocketCommunicator::request_type_to_string(Seeder::RequestType re
         return "HELLO";
     case Seeder::RequestType_PeerStatusRequest:
         return "PEER_STATUS";
-    case Seeder::RequestType_GetPeersRequest:
+    case Seeder::RequestType_GetElitedPeersRequest:
         return "GET_PEERS";
+    case Seeder::RequestType_GetPeersByLastAliveRequest:
+        return "ALIVE_PEERS";
         break;
     case Seeder::RequestType_NONE:
     default:
