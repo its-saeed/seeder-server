@@ -20,7 +20,7 @@ struct GetElitedPeersRequest {
 
 struct GetPeersByLastAliveRequest {
     number_of_peers: byte;
-    last_alive_since: ulong;    // Optionally can be set to query peers based on ther aliveness.
+    last_alive_since: ulong;
 }
 
 union RequestType { 

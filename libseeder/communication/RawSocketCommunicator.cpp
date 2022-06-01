@@ -1,11 +1,15 @@
 #include "RawSocketCommunicator.h"
 
+#include <mutex>
+
 #include <evpp/udp/udp_server.h>
 #include <evpp/event_loop_thread_pool.h>
 #include <evpp/event_loop.h>
 
 #include "SpdLogger.h"
 #include "Response_generated.h"
+
+std::mutex client_manager_mutex;
 
 RawSocketCommunicator::RawSocketCommunicator(InMemoryClientManager* client_manager, const Argument& args)
 : beginning_port(args.beginning_port)
@@ -82,7 +86,12 @@ void RawSocketCommunicator::handle_hello_request(
 {
     flatbuffers::FlatBufferBuilder builder(100);
     flatbuffers::Offset<Seeder::HelloResponse> response;
-    if (client_manager->add({ request->request_as_HelloRequest()->address()->str() }))       // Added successfully
+    bool added_successfully;
+    {
+        std::lock_guard<std::mutex> guard(client_manager_mutex);
+        added_successfully = client_manager->add({ request->request_as_HelloRequest()->address()->str() });
+    }
+    if (added_successfully)
         response = Seeder::CreateHelloResponse(builder,
             Seeder::HelloRequestResult::HelloRequestResult_REGISTERED_SUCCESSFULLY,
             peer_availability_interval.count());
@@ -112,12 +121,15 @@ void RawSocketCommunicator::handle_get_elited_peers_request(
 {
     flatbuffers::FlatBufferBuilder builder(1000);
 
-    const auto peers = client_manager->get_elited_peers(
-        request->request_as_GetElitedPeersRequest()->number_of_peers());
+	std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
+    {
+        std::lock_guard<std::mutex> guard(client_manager_mutex);
+		const auto peers = client_manager->get_elited_peers(
+			request->request_as_GetElitedPeersRequest()->number_of_peers());
 
-    std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
-    for (const auto& peer : peers) {
-        active_peers.push_back(builder.CreateString(peer->get_address()));
+		for (const auto& peer : peers) {
+			active_peers.push_back(builder.CreateString(peer->get_address()));
+		}
     }
     auto response = Seeder::CreateGetElitedPeersResponse(builder, builder.CreateVector(active_peers));
 
@@ -147,9 +159,13 @@ void RawSocketCommunicator::handle_peer_status_request(const Seeder::Request* re
     }
 
     const time_t last_alive = status_request->last_alive();
-    client_manager->touch(status_request->address()->str(), last_alive);
-    client_manager->set_number_of_connections_of(status_request->address()->str(),
-        status_request->peer_current_connections()->size());
+    {
+        std::lock_guard<std::mutex> guard(client_manager_mutex);
+
+		client_manager->touch(status_request->address()->str(), last_alive);
+		client_manager->set_number_of_connections_of(status_request->address()->str(),
+			status_request->peer_current_connections()->size());
+    }
 
     logging::log()->info("Peer {} is alive ({}) and has {} connections with: {}",
         status_request->address()->str(),
@@ -161,24 +177,30 @@ void RawSocketCommunicator::handle_peer_status_request(const Seeder::Request* re
 void RawSocketCommunicator::handle_bye_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg)
 {
     auto bye_request = request->request_as_ByeRequest();
-    client_manager->remove(bye_request->address()->str());
+    {
+        std::lock_guard<std::mutex> guard(client_manager_mutex);
+        client_manager->remove(bye_request->address()->str());
+    }
 }
 
 void RawSocketCommunicator::handle_get_peers_by_last_alive_request(const Seeder::Request* request, evpp::udp::MessagePtr& msg)
 {
     flatbuffers::FlatBufferBuilder builder(1000);
 
-    const auto peers = client_manager->get_alive_peers_since(
-        request->request_as_GetPeersByLastAliveRequest()->last_alive_since());
+    std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
+    {
+        std::lock_guard<std::mutex> guard(client_manager_mutex);
+		const auto peers = client_manager->get_alive_peers_since(
+			request->request_as_GetPeersByLastAliveRequest()->last_alive_since());
 
+		for (const auto& peer : peers) {
+			active_peers.push_back(builder.CreateString(peer->get_address()));
+		}
+    }
 
     logging::log()->info("Getting alive peers since: {}", 
         request->request_as_GetPeersByLastAliveRequest()->last_alive_since());
 
-    std::vector<flatbuffers::Offset<flatbuffers::String>> active_peers;
-    for (const auto& peer : peers) {
-        active_peers.push_back(builder.CreateString(peer->get_address()));
-    }
     auto response = Seeder::CreateGetAlivePeersResponse(builder, builder.CreateVector(active_peers));
 
     auto response_builder = Seeder::ResponseBuilder(builder);

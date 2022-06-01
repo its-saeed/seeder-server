@@ -21,7 +21,7 @@ public:
 private:
 	std::unordered_map<std::string, SharedClient> active_clients;
 	LastAliveOrderedClientSet last_alive_ordered_client_set;
-	ElitedClientSet elite_client_set;
+	EliteClientSet elite_client_set;
 };
 
 #endif // InMemoryPersistor_h__
