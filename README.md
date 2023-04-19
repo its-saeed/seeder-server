@@ -1,1 +1,1 @@
-# zilliqa-seeder-server
+# seeder-server
